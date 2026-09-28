@@ -1,38 +1,12 @@
-import React, { createContext, useContext, useState } from "react";
-
-const AuthContext = createContext(null);
+// Backward compat shim — Zustand store is source of truth
+// New code should import from "@/stores/auth.store.js" or "@/hooks/useAuth.js"
+import React from "react";
+import { useAuth as useAuthHook } from "./stores/auth.store.js";
 
 export function Auth({ children }) {
-  const [u, setU] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem("fb_user") || "null");
-    } catch {
-      return null;
-    }
-  });
-
-  const login = (data) => {
-    localStorage.setItem("fb_token", data.token);
-    localStorage.setItem("fb_user", JSON.stringify(data.user));
-    setU(data.user);
-  };
-
-  const updateUser = (user) => {
-    localStorage.setItem("fb_user", JSON.stringify(user));
-    setU(user);
-  };
-
-  const logout = () => {
-    localStorage.removeItem("fb_token");
-    localStorage.removeItem("fb_user");
-    setU(null);
-  };
-
-  return (
-    <AuthContext.Provider value={{ u, login, updateUser, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  // Zustand is global, no provider needed — keep wrapper for compat
+  return <>{children}</>;
 }
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = useAuthHook;
+export { useAuthHook };

@@ -1,13 +1,3 @@
-import axios from "axios";
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
-});
-
-api.interceptors.request.use((c) => {
-  const t = localStorage.getItem("fb_token");
-  if (t) c.headers.Authorization = `Bearer ${t}`;
-  return c;
-});
-
-export default api;
+// Backward compat shim — use src/api/client.js for new code
+import client from "./api/client.js";
+export default client;
