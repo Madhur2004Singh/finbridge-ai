@@ -12,6 +12,10 @@ const SchemeDetail = lazy(() => import("../features/schemes/SchemeDetail"));
 const Tracker = lazy(() => import("../features/tracker/Tracker"));
 const Literacy = lazy(() => import("../features/literacy/Literacy"));
 const Profile = lazy(() => import("../features/profile/Profile"));
+const Survey = lazy(() => import("../features/survey/Survey"));
+const Blogs = lazy(() => import("../features/blogs/Blogs"));
+const BlogDetail = lazy(() => import("../features/blogs/BlogDetail"));
+const BlogEditor = lazy(() => import("../features/blogs/BlogEditor"));
 
 function SuspenseFallback() {
   return <Loading text="Loading..." />;
@@ -39,6 +43,11 @@ export default function AppRoutes() {
           <Route path="tracker" element={<Tracker />} />
           <Route path="literacy" element={<Literacy />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="survey" element={<Survey />} />
+          <Route path="blogs" element={<Blogs />} />
+          <Route path="blogs/new" element={<BlogEditor />} />
+          <Route path="blogs/:slug" element={<BlogDetail />} />
+          <Route path="blogs/:slug/edit" element={<BlogEditor />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

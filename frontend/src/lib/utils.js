@@ -11,3 +11,17 @@ export function formatCurrency(value) {
 export function cn(...classes) {
   return classes.filter(Boolean).join(" ");
 }
+
+/** Scheme categories may arrive polluted ("Label | desc\n\n- **Description...") */
+export function cleanCategory(category = "") {
+  return String(category).split("\n")[0].split("|")[0].trim();
+}
+
+export function formatDate(value) {
+  if (!value) return "";
+  return new Date(value).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}

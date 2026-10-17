@@ -1,6 +1,7 @@
 import { Scheme } from "../models/Scheme.js";
 import { toSlug } from "../utils/slug.js";
 import { logger } from "../utils/logger.js";
+import { firstSection, cleanCategory, cleanMarkdownEscapes } from "../utils/schemeText.js";
 import schemeData from "../data/schemes.json" with { type: "json" };
 
 const targetMap = {
@@ -52,15 +53,22 @@ export const seedSchemesIfEmpty = async () => {
     return;
   }
   for (const s of schemeData) {
+    // Source data cascades every section into the description; keep only the
+    // relevant single section and clean the polluted category label.
+    const description = firstSection(s.description);
+    const eligibility = firstSection(s.eligibility);
+    const documents = firstSection(s.documents);
+    const steps = s.steps.map((x) => cleanMarkdownEscapes(x));
+
     await Scheme.create({
       slug: toSlug(s.name),
       name: { en: s.name, hi: s.name, kn: s.name },
-      category: s.category,
-      description: { en: s.description, hi: s.description, kn: s.description },
-      eligibility: [{ en: s.eligibility, hi: s.eligibility, kn: s.eligibility }],
-      benefits: [{ en: s.description, hi: s.description, kn: s.description }],
-      documentsRequired: [{ en: s.documents, hi: s.documents, kn: s.documents }],
-      applicationSteps: s.steps.map((x) => ({ en: x, hi: x, kn: x })),
+      category: cleanCategory(s.category),
+      description: { en: description, hi: description, kn: description },
+      eligibility: [{ en: eligibility, hi: eligibility, kn: eligibility }],
+      benefits: [{ en: description, hi: description, kn: description }],
+      documentsRequired: [{ en: documents, hi: documents, kn: documents }],
+      applicationSteps: steps.map((x) => ({ en: x, hi: x, kn: x })),
       officialSource: s.officialSource,
       targetOccupations: targetMap[s.name]?.occupation || [],
       targetAgeGroups: ["18-25", "26-40", "41-60", "60+"],

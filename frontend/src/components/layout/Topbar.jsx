@@ -16,6 +16,8 @@ export default function Topbar() {
     { path: "/schemes", key: "schemes", icon: "🏛️" },
     { path: "/tracker", key: "tracker", icon: "📊" },
     { path: "/literacy", key: "literacy", icon: "📚" },
+    { path: "/blogs", key: "blogs", icon: "📰" },
+    { path: "/survey", key: "survey", icon: "📝" },
     { path: "/profile", key: "profile", icon: "👤" },
   ];
 
@@ -60,7 +62,7 @@ export default function Topbar() {
         <div className="topbar-actions">
           <button
             onClick={toggleTheme}
-            className="hidden sm:inline-flex items-center justify-center w-9 h-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition"
+            className="theme-toggle"
             title={`Switch to ${theme === "light" ? "dark" : "light"}`}
             aria-label="Toggle theme"
           >

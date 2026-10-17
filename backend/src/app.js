@@ -17,6 +17,10 @@ app.use(
 );
 
 // Body parsers
+// Blog create/upload accepts base64 images (file picker + whiteboard canvas),
+// so /api/blogs needs a larger limit. body-parser skips re-parsing once
+// req._body is set, so mounting it BEFORE the global 10kb parser is safe.
+app.use("/api/blogs", express.json({ limit: "8mb" }));
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true }));
 

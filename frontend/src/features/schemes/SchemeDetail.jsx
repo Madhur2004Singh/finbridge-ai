@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { NavLink, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import client from "../../api/client";
-import { localized } from "../../lib/utils";
+import { localized, cleanCategory } from "../../lib/utils";
+import RichText, { stripMarkdown } from "../../lib/markdown";
 import Loading from "../../components/ui/Loading";
 import ErrorMessage from "../../components/ui/ErrorMessage";
 import EmptyState from "../../components/ui/EmptyState";
@@ -49,9 +50,9 @@ export default function SchemeDetail() {
       <section className="scheme-detail-header">
         <div className="scheme-icon huge">🏛️</div>
         <div>
-          <span className="scheme-category">{s.category}</span>
+          <span className="scheme-category">{cleanCategory(s.category)}</span>
           <h1>{localized(s.name, i18n.language)}</h1>
-          <p>{localized(s.description, i18n.language)}</p>
+          <RichText className="scheme-description" text={localized(s.description, i18n.language)} />
         </div>
       </section>
 
@@ -61,7 +62,7 @@ export default function SchemeDetail() {
             <div className="detail-card-heading"><span>{section.icon}</span><h2>{section.title}</h2></div>
             <ul>
               {(section.items || []).map((item, index) => (
-                <li key={index}>{localized(item, i18n.language)}</li>
+                <li key={index}>{stripMarkdown(localized(item, i18n.language))}</li>
               ))}
             </ul>
           </section>

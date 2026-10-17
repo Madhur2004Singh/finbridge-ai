@@ -1,6 +1,22 @@
 import { ApiError } from "../utils/ApiError.js";
 
 export const errorHandler = (err, _req, res, _next) => {
+  // Body parser: payload too large
+  if (err.type === "entity.too.large" || err.status === 413) {
+    return res.status(413).json({
+      success: false,
+      message: "Payload too large. Please upload a smaller image.",
+    });
+  }
+
+  // Body parser: malformed JSON
+  if (err.type === "entity.parse.failed") {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid JSON payload",
+    });
+  }
+
   // Mongoose duplicate key (e.g., email unique)
   if (err.code === 11000) {
     const field = Object.keys(err.keyValue || {})[0] || "field";

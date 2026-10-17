@@ -1,7 +1,20 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { NavLink } from "react-router-dom";
 import { useAuth } from "../../stores/auth.store";
 import client from "../../api/client";
+import { surveyApi } from "../../api/index";
 import ErrorMessage from "../../components/ui/ErrorMessage";
+
+const STATUS_LABEL = {
+  not_started: "Not started",
+  partial: "Partially completed",
+  complete: "Completed",
+};
+
+const display = (value) =>
+  !value || value === "not_collected"
+    ? "Not collected"
+    : String(value).replace(/_/g, " ");
 
 export default function Profile() {
   const { u, updateUser } = useAuth();
@@ -9,6 +22,26 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [profile, setProfile] = useState(null);
+  const [status, setStatus] = useState("not_started");
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const { data } = await surveyApi.get();
+        if (mounted) {
+          setProfile(data.profile || null);
+          setStatus(data.status || "not_started");
+        }
+      } catch {
+        // non-fatal — profile still editable
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const update = (key, value) => setF((prev) => ({ ...prev, [key]: value }));
 
@@ -39,6 +72,39 @@ export default function Profile() {
           <p>Keep your basic information updated so FinBridge can provide more relevant educational content and scheme recommendations.</p>
         </div>
         <div className="profile-avatar-large">{(u?.name || "U").charAt(0).toUpperCase()}</div>
+      </section>
+
+      <section className="profile-preview">
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">SURVEY PROFILE</span>
+            <h2>Generated financial profile</h2>
+          </div>
+          <span className={`badge status-${status}`}>{STATUS_LABEL[status]}</span>
+        </div>
+        {profile ? (
+          <div className="preview-grid">
+            <div><span>Age group</span><strong>{display(profile.demographics?.ageGroup)}</strong></div>
+            <div><span>Occupation</span><strong>{display(profile.demographics?.occupation)}</strong></div>
+            <div><span>State</span><strong>{display(profile.demographics?.state)}</strong></div>
+            <div><span>City</span><strong>{display(profile.demographics?.city)}</strong></div>
+            <div><span>Income</span><strong>{display(profile.financial?.incomeRange)}</strong></div>
+            <div><span>Savings habit</span><strong>{display(profile.financial?.savingsHabit)}</strong></div>
+            <div><span>Spending</span><strong>{display(profile.financial?.expenditurePattern)}</strong></div>
+            <div><span>UPI usage</span><strong>{display(profile.literacy?.upiUsage)}</strong></div>
+            <div><span>Digital awareness</span><strong>{display(profile.literacy?.digitalPaymentAwareness)}</strong></div>
+            <div><span>Financial security</span><strong>{display(profile.literacy?.financialSecurityKnowledge)}</strong></div>
+            <div><span>Risk preference</span><strong>{display(profile.riskPreference)}</strong></div>
+            <div><span>Needs</span><strong>{(profile.needs || []).map(display).join(", ") || "Not collected"}</strong></div>
+          </div>
+        ) : (
+          <p className="muted">You haven't completed the survey yet. Your generated profile will appear here.</p>
+        )}
+        <div style={{ marginTop: 16 }}>
+          <NavLink to="/survey" className="btn secondary">
+            {status === "not_started" ? "Take the survey →" : "Update survey responses →"}
+          </NavLink>
+        </div>
       </section>
 
       <form className="profile-form" onSubmit={submit}>

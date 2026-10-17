@@ -13,14 +13,15 @@ const userSchema = new mongoose.Schema(
       index: true,
     },
     passwordHash: { type: String, required: true, select: false },
+    role: { type: String, enum: ["user", "admin"], default: "user" },
+    // Financial fields have NO defaults: unknown stays unknown until the
+    // user actually provides them (survey or manual profile edit).
     ageGroup: {
       type: String,
-      default: "18-25",
       enum: ["18-25", "26-40", "41-60", "60+", "other"],
     },
     occupation: {
       type: String,
-      default: "other",
       enum: [
         "student",
         "salaried",
@@ -34,17 +35,17 @@ const userSchema = new mongoose.Schema(
     },
     incomeRange: {
       type: String,
-      default: "below_15000",
       enum: ["below_15000", "15000_30000", "30000_60000", "above_60000"],
     },
     state: { type: String, trim: true },
+    city: { type: String, trim: true },
     language: { type: String, default: "en", enum: ["en", "hi", "kn"] },
     financialGoals: [{ type: String }],
     riskPreference: {
       type: String,
-      default: "low",
       enum: ["low", "medium", "high"],
     },
+    surveyCompletedAt: { type: Date },
   },
   { timestamps: true }
 );

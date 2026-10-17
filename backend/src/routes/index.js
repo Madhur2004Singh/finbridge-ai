@@ -5,6 +5,8 @@ import schemeRoutes from "./scheme.routes.js";
 import expenseRoutes from "./expense.routes.js";
 import dashboardRoutes from "./dashboard.routes.js";
 import healthRoutes from "./health.routes.js";
+import surveyRoutes from "./survey.routes.js";
+import blogRoutes from "./blog.routes.js";
 
 const router = Router();
 
@@ -14,5 +16,7 @@ router.use("/users", userRoutes);
 router.use("/schemes", schemeRoutes);
 router.use("/expenses", expenseRoutes);
 router.use("/dashboard", dashboardRoutes);
+router.use("/survey", surveyRoutes);
+router.use("/blogs", blogRoutes);
 
 export default router;
