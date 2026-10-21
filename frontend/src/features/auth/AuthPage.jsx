@@ -8,24 +8,62 @@ export default function AuthPage({ register = false }) {
   const { login } = useAuth();
   const nav = useNavigate();
 
-  const [f, setF] = useState({ name: "", email: "", password: "" });
+  const [f, setF] = useState({ name: "", email: "", password: "", confirmPassword: "" });
   const [err, setErr] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const schema = register ? registerSchema : loginSchema;
+
+  const validateField = (key, value) => {
+    let message = "";
+    if (register && key === "confirmPassword") {
+      message = value === f.password ? "" : "Passwords do not match";
+    } else if (key === "name" && !register) {
+      message = "";
+    } else if (schema.shape[key]) {
+      const result = schema.shape[key].safeParse(value);
+      message = result.success ? "" : result.error.issues[0].message;
+    }
+    setFieldErrors((prev) => ({ ...prev, [key]: message }));
+  };
+
+  const update = (key) => (e) => {
+    const value = e.target.value;
+    setF((prev) => ({ ...prev, [key]: value }));
+    if (fieldErrors[key]) {
+      setFieldErrors((prev) => ({ ...prev, [key]: "" }));
+    }
+    if (key === "password" && register && f.confirmPassword) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        confirmPassword: value === f.confirmPassword ? "" : "Passwords do not match",
+      }));
+    }
+  };
+
+  const blur = (key) => (e) => validateField(key, e.target.value.trim());
 
   const submit = async (e) => {
     e.preventDefault();
     setErr("");
-    setFieldErrors({});
 
-    // Zod validation
-    const schema = register ? registerSchema : loginSchema;
-    const parsed = schema.safeParse(f);
+    const payload = register
+      ? { name: f.name.trim(), email: f.email.trim(), password: f.password }
+      : { email: f.email.trim(), password: f.password };
+
+    const errors = {};
+    const parsed = schema.safeParse(payload);
     if (!parsed.success) {
-      const errors = {};
       parsed.error.issues.forEach((iss) => {
         errors[iss.path[0]] = iss.message;
       });
+    }
+    if (register && f.password !== f.confirmPassword) {
+      errors.confirmPassword = "Passwords do not match";
+    }
+    if (Object.keys(errors).length) {
       setFieldErrors(errors);
       setErr("Please fix the highlighted fields.");
       return;
@@ -33,12 +71,14 @@ export default function AuthPage({ register = false }) {
 
     try {
       setLoading(true);
-      const { data } = await client.post(`/auth/${register ? "register" : "login"}`, f);
+      const { data } = await client.post(
+        `/auth/${register ? "register" : "login"}`,
+        payload
+      );
       login(data);
       nav("/dashboard");
     } catch (e) {
       const msg = e.response?.data?.message || "Unable to complete the request.";
-      // show field errors if returned
       if (e.response?.data?.errors?.length) {
         const fe = {};
         e.response.data.errors.forEach((er) => (fe[er.field] = er.message));
@@ -49,6 +89,8 @@ export default function AuthPage({ register = false }) {
       setLoading(false);
     }
   };
+
+  const pwdType = showPassword ? "text" : "password";
 
   return (
     <div className="auth-shell">
@@ -90,38 +132,72 @@ export default function AuthPage({ register = false }) {
             <label className="field">
               <span>Name</span>
               <input
-                className="input"
+                className={`input ${fieldErrors.name ? "input-error" : ""}`}
                 placeholder="Enter your name"
+                autoComplete="name"
                 value={f.name}
-                onChange={(e) => setF({ ...f, name: e.target.value })}
+                onChange={update("name")}
+                onBlur={blur("name")}
               />
-              {fieldErrors.name && <small className="text-red-600 text-xs mt-1">{fieldErrors.name}</small>}
+              {fieldErrors.name && <small className="field-error">{fieldErrors.name}</small>}
             </label>
           )}
 
           <label className="field">
             <span>Email</span>
             <input
-              className="input"
+              className={`input ${fieldErrors.email ? "input-error" : ""}`}
               placeholder="you@example.com"
               type="email"
+              autoComplete="email"
               value={f.email}
-              onChange={(e) => setF({ ...f, email: e.target.value })}
+              onChange={update("email")}
+              onBlur={blur("email")}
             />
-            {fieldErrors.email && <small className="text-red-600 text-xs mt-1">{fieldErrors.email}</small>}
+            {fieldErrors.email && <small className="field-error">{fieldErrors.email}</small>}
           </label>
 
           <label className="field">
             <span>Password</span>
-            <input
-              className="input"
-              placeholder="Enter your password"
-              type="password"
-              value={f.password}
-              onChange={(e) => setF({ ...f, password: e.target.value })}
-            />
-            {fieldErrors.password && <small className="text-red-600 text-xs mt-1">{fieldErrors.password}</small>}
+            <div className="password-input">
+              <input
+                className={`input ${fieldErrors.password ? "input-error" : ""}`}
+                placeholder={register ? "At least 8 characters" : "Enter your password"}
+                type={pwdType}
+                autoComplete={register ? "new-password" : "current-password"}
+                value={f.password}
+                onChange={update("password")}
+                onBlur={blur("password")}
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
+            {fieldErrors.password && <small className="field-error">{fieldErrors.password}</small>}
           </label>
+
+          {register && (
+            <label className="field">
+              <span>Confirm password</span>
+              <input
+                className={`input ${fieldErrors.confirmPassword ? "input-error" : ""}`}
+                placeholder="Re-enter your password"
+                type={pwdType}
+                autoComplete="new-password"
+                value={f.confirmPassword}
+                onChange={update("confirmPassword")}
+                onBlur={blur("confirmPassword")}
+              />
+              {fieldErrors.confirmPassword && (
+                <small className="field-error">{fieldErrors.confirmPassword}</small>
+              )}
+            </label>
+          )}
 
           {err && (
             <div className="alert error-alert">

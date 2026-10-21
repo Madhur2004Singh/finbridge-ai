@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import client from "../../api/client";
-import { localized } from "../../lib/utils";
+import { localized, cleanCategory } from "../../lib/utils";
+import { stripMarkdown } from "../../lib/markdown";
 import { useDebounce } from "../../hooks/useDebounce";
 import Loading from "../../components/ui/Loading";
 import ErrorMessage from "../../components/ui/ErrorMessage";
@@ -86,10 +87,10 @@ export default function Schemes() {
             <NavLink to={`/schemes/${x.slug}`} className="scheme-card" key={x._id}>
               <div className="scheme-card-top">
                 <div className="scheme-icon large">🏛️</div>
-                <span className="scheme-category">{x.category}</span>
+                <span className="scheme-category">{cleanCategory(x.category)}</span>
               </div>
               <h2>{localized(x.name, i18n.language)}</h2>
-              <p>{localized(x.description, i18n.language)}</p>
+              <p>{stripMarkdown(localized(x.description, i18n.language))}</p>
               <span className="scheme-card-link">{t("details")} <span>→</span></span>
             </NavLink>
           ))}

@@ -3,7 +3,9 @@ import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../stores/auth.store";
 import client from "../../api/client";
+import { surveyApi } from "../../api/index";
 import { localized, formatCurrency } from "../../lib/utils";
+import { stripMarkdown } from "../../lib/markdown";
 import Loading from "../../components/ui/Loading";
 import ErrorMessage from "../../components/ui/ErrorMessage";
 import EmptyState from "../../components/ui/EmptyState";
@@ -12,6 +14,7 @@ export default function Dashboard() {
   const { t, i18n } = useTranslation();
   const { u } = useAuth();
   const [d, setD] = useState(null);
+  const [surveyStatus, setSurveyStatus] = useState(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -25,7 +28,16 @@ export default function Dashboard() {
         if (mounted) setError(e.response?.data?.message || "Unable to load your dashboard.");
       }
     }
+    async function fetchSurveyStatus() {
+      try {
+        const { data } = await surveyApi.getStatus();
+        if (mounted) setSurveyStatus(data.status);
+      } catch {
+        // dashboard still works without survey status
+      }
+    }
     fetchDashboard();
+    fetchSurveyStatus();
     return () => { mounted = false; };
   }, []);
 
@@ -47,6 +59,25 @@ export default function Dashboard() {
       </section>
 
       <ErrorMessage message={error} />
+
+      {surveyStatus && surveyStatus !== "complete" && (
+        <div className="survey-cta">
+          <span className="survey-cta-icon">📝</span>
+          <div>
+            <strong>
+              {surveyStatus === "not_started"
+                ? "Complete your financial profile"
+                : "Finish your financial profile"}
+            </strong>
+            <p className="muted">
+              Answer a few questions so we can personalize your scheme recommendations.
+            </p>
+          </div>
+          <NavLink to="/survey" className="btn primary">
+            {surveyStatus === "not_started" ? "Start survey" : "Continue"} →
+          </NavLink>
+        </div>
+      )}
 
       {d && (
         <>
@@ -80,7 +111,7 @@ export default function Dashboard() {
                       <div className="scheme-icon">🏛️</div>
                       <div className="recommendation-content">
                         <strong>{localized(x.scheme.name, i18n.language)}</strong>
-                        <span>{localized(x.scheme.description, i18n.language)}</span>
+                        <span>{stripMarkdown(localized(x.scheme.description, i18n.language))}</span>
                       </div>
                       <span className="arrow">→</span>
                     </NavLink>
