@@ -31,7 +31,7 @@ const arrayEnumCheck = (field, values) =>
     .withMessage(`${field} contains an invalid value`);
 
 // Validation prevents inconsistent/unknown values from reaching MongoDB
-const surveyValidators = [
+export const surveyValidators = [
   enumCheck("ageGroup", ["18-25", "26-40", "41-60", "60+", "other"]),
   enumCheck("occupation", [
     "student",
@@ -43,8 +43,8 @@ const surveyValidators = [
     "senior_citizen",
     "other",
   ]),
-  body("state").optional({ values: "null" }).isString().trim().isLength({ max: 60 }).withMessage("State is too long"),
-  body("city").optional({ values: "null" }).isString().trim().isLength({ max: 60 }).withMessage("City is too long"),
+  body("state").optional({ values: "falsy" }).isString().trim().isLength({ max: 60 }).withMessage("State is too long"),
+  body("city").optional({ values: "falsy" }).isString().trim().isLength({ max: 60 }).withMessage("City is too long"),
   enumCheck("incomeRange", ["below_15000", "15000_30000", "30000_60000", "above_60000"]),
   enumCheck("savingsHabit", ["regular", "occasional", "rarely", "never"]),
   enumCheck("expenditurePattern", ["balanced", "spend_more", "save_more", "unsure"]),

@@ -46,13 +46,10 @@ const targetMap = {
   },
 };
 
-export const seedSchemesIfEmpty = async () => {
+export const seedSchemesSafely = async () => {
   const count = await Scheme.countDocuments();
-  if (count > 0) {
-    logger.info(`Schemes already seeded (${count})`);
-    return;
-  }
-  for (const s of schemeData) {
+  if (count > 0) logger.info(`Checking seed slugs against ${count} existing schemes`);
+  const operations = schemeData.map((s) => {
     // Source data cascades every section into the description; keep only the
     // relevant single section and clean the polluted category label.
     const description = firstSection(s.description);
@@ -60,25 +57,29 @@ export const seedSchemesIfEmpty = async () => {
     const documents = firstSection(s.documents);
     const steps = s.steps.map((x) => cleanMarkdownEscapes(x));
 
-    await Scheme.create({
+    const scheme = {
       slug: toSlug(s.name),
-      name: { en: s.name, hi: s.name, kn: s.name },
+      // Unreviewed translations are omitted so the frontend uses English fallback.
+      name: { en: s.name },
       category: cleanCategory(s.category),
-      description: { en: description, hi: description, kn: description },
-      eligibility: [{ en: eligibility, hi: eligibility, kn: eligibility }],
-      benefits: [{ en: description, hi: description, kn: description }],
-      documentsRequired: [{ en: documents, hi: documents, kn: documents }],
-      applicationSteps: steps.map((x) => ({ en: x, hi: x, kn: x })),
+      description: { en: description },
+      eligibility: [{ en: eligibility }],
+      benefits: [{ en: description }],
+      documentsRequired: [{ en: documents }],
+      applicationSteps: steps.map((x) => ({ en: x })),
       officialSource: s.officialSource,
       targetOccupations: targetMap[s.name]?.occupation || [],
-      targetAgeGroups: ["18-25", "26-40", "41-60", "60+"],
-      targetIncomeRanges: ["below_15000", "15000_30000", "30000_60000", "above_60000"],
-    });
-  }
-  logger.info(`Seeded ${schemeData.length} schemes`);
-};
-
-export const reseedSchemes = async () => {
-  await Scheme.deleteMany({});
-  await seedSchemesIfEmpty();
+      // No age/income eligibility is asserted without scheme-specific source evidence.
+    };
+    return {
+      updateOne: {
+        filter: { slug: scheme.slug },
+        update: { $setOnInsert: scheme },
+        upsert: true,
+      },
+    };
+  });
+  const result = await Scheme.bulkWrite(operations, { ordered: true });
+  logger.info(`Inserted ${result.upsertedCount} missing schemes; existing schemes preserved`);
+  return { inserted: result.upsertedCount, existing: count };
 };

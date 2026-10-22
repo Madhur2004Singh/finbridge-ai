@@ -56,38 +56,77 @@ export const generateProfileFromAnswers = (userId, answers = {}) => {
  * recommendations and the account profile stay consistent.
  */
 export const saveSurveyForUser = async (userId, body) => {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    throw new ApiError(400, "Survey payload must be an object");
+  }
   const answers = {};
   for (const f of SURVEY_FIELDS) {
-    if (body[f] !== undefined) answers[f] = body[f];
+    if (Object.hasOwn(body, f)) {
+      const value = body[f];
+      // Empty text/select values clear a scalar; [] explicitly clears a multi-select.
+      answers[f] = value === "" ? null : value;
+    }
   }
+
+  const mergedAnswers = await SurveyResponse.findOne({ userId }).lean();
+  const nextAnswers = { ...(mergedAnswers || {}), ...answers };
+  const completionStatus = computeCompletion(nextAnswers);
+  const completedAt = completionStatus === "complete"
+    ? (mergedAnswers?.completedAt || new Date())
+    : null;
+  const update = { $set: { ...answers }, $unset: {} };
+  if (completedAt) update.$set.completedAt = completedAt;
+  else update.$unset.completedAt = 1;
 
   const responses = await SurveyResponse.findOneAndUpdate(
     { userId },
-    { $set: { ...answers, completedAt: new Date() } },
+    update,
     { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
   );
 
-  const profileDoc = generateProfileFromAnswers(userId, responses || answers);
-  const profile = await FinancialProfile.findOneAndUpdate(
-    { userId },
-    { $set: profileDoc },
-    { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
-  );
-
-  // Mirror only real values onto the user (never "not_collected")
-  const mirror = {};
-  if (responses?.ageGroup) mirror.ageGroup = responses.ageGroup;
-  if (responses?.occupation) mirror.occupation = responses.occupation;
-  if (responses?.incomeRange) mirror.incomeRange = responses.incomeRange;
-  if (responses?.riskPreference) mirror.riskPreference = responses.riskPreference;
-  if (responses?.state) mirror.state = responses.state;
-  if (responses?.city) mirror.city = responses.city;
-  if (responses?.goals?.length) mirror.financialGoals = responses.goals;
-  if (profile.completionStatus === "complete") {
-    mirror.surveyCompletedAt = new Date();
+  let profile;
+  try {
+    const profileDoc = generateProfileFromAnswers(userId, responses || answers);
+    profile = await FinancialProfile.findOneAndUpdate(
+      { userId },
+      { $set: profileDoc },
+      { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
+    );
+  } catch (error) {
+    throw new ApiError(503, "Survey answers were saved, but profile generation failed. Please retry saving to synchronize your profile.");
   }
-  if (Object.keys(mirror).length > 0) {
-    await User.findByIdAndUpdate(userId, { $set: mirror });
+
+  // Synchronize only fields owned by the survey, including cleared values.
+  const userFields = {
+    ageGroup: "ageGroup",
+    occupation: "occupation",
+    incomeRange: "incomeRange",
+    riskPreference: "riskPreference",
+    state: "state",
+    city: "city",
+    goals: "financialGoals",
+  };
+  const mirrorSet = {};
+  const mirrorUnset = {};
+  for (const [answerField, userField] of Object.entries(userFields)) {
+    if (!Object.hasOwn(answers, answerField)) continue;
+    const value = responses[answerField];
+    if (Array.isArray(value)) mirrorSet[userField] = value;
+    else if (value === null || value === undefined || value === "") mirrorUnset[userField] = 1;
+    else mirrorSet[userField] = value;
+  }
+  if (profile.completionStatus === "complete" && responses.completedAt) {
+    mirrorSet.surveyCompletedAt = responses.completedAt;
+  } else {
+    mirrorUnset.surveyCompletedAt = 1;
+  }
+  const mirrorUpdate = {};
+  if (Object.keys(mirrorSet).length) mirrorUpdate.$set = mirrorSet;
+  if (Object.keys(mirrorUnset).length) mirrorUpdate.$unset = mirrorUnset;
+  try {
+    if (Object.keys(mirrorUpdate).length) await User.findByIdAndUpdate(userId, mirrorUpdate);
+  } catch (error) {
+    throw new ApiError(503, "Survey and financial profile were saved, but account synchronization failed. Please retry saving.");
   }
 
   return { responses, profile };

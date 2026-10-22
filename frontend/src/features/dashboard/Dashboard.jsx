@@ -60,6 +60,22 @@ export default function Dashboard() {
 
       <ErrorMessage message={error} />
 
+      <section className="krishi-sakhi-banner" aria-labelledby="krishi-sakhi-heading">
+        <div className="krishi-sakhi-visual" aria-hidden="true">🌾</div>
+        <div className="krishi-sakhi-copy">
+          <h2 id="krishi-sakhi-heading">{t("krishiSakhiHeading")}</h2>
+          <p>{t("krishiSakhiDescription")}</p>
+        </div>
+        <a
+          className="krishi-sakhi-link"
+          href="https://krishisakhi.vijaypal.me/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {t("krishiSakhiVisit")}
+        </a>
+      </section>
+
       {surveyStatus && surveyStatus !== "complete" && (
         <div className="survey-cta">
           <span className="survey-cta-icon">📝</span>

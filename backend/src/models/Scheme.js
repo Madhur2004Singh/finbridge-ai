@@ -13,7 +13,6 @@ const schemeSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      index: true,
     },
     name: localizedString,
     category: { type: String, trim: true },
@@ -31,7 +30,6 @@ const schemeSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-schemeSchema.index({ slug: 1 }, { unique: true });
 schemeSchema.index({ active: 1, category: 1 });
 schemeSchema.index({ active: 1, targetOccupations: 1 });
 
