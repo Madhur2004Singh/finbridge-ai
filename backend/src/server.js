@@ -1,13 +1,13 @@
 import { env } from "./config/env.js";
 import { connectDB } from "./config/db.js";
 import app from "./app.js";
-import { seedSchemesIfEmpty } from "./services/seed.service.js";
+import { seedSchemesSafely } from "./services/seed.service.js";
 import { logger } from "./utils/logger.js";
 
 const start = async () => {
   try {
     await connectDB();
-    await seedSchemesIfEmpty();
+    await seedSchemesSafely();
 
     app.listen(env.PORT, () => {
       logger.info(`API running on http://localhost:${env.PORT}`);

@@ -33,9 +33,22 @@ export const scoreSchemes = (schemes, user, limit = 6) => {
 
 const real = (value) => (value && value !== NOT_COLLECTED ? value : undefined);
 
+export const buildRecommendationProfile = (profile, user = {}) => ({
+  // Once a survey profile exists, it is authoritative, including its unknowns.
+  occupation: profile
+    ? real(profile.demographics?.occupation)
+    : real(user.occupation),
+  ageGroup: profile
+    ? real(profile.demographics?.ageGroup)
+    : real(user.ageGroup),
+  incomeRange: profile
+    ? real(profile.financial?.incomeRange)
+    : real(user.incomeRange),
+});
+
 /**
- * Recommendations prefer the survey-generated financial profile, falling back
- * to whatever the account already has. Unknown values are never assumed.
+ * Recommendations use a survey-generated profile when present; account values
+ * are only a fallback for users without a generated survey profile.
  */
 export const getRecommendations = async (user, limit = 6) => {
   const [schemes, profile] = await Promise.all([
@@ -43,13 +56,7 @@ export const getRecommendations = async (user, limit = 6) => {
     FinancialProfile.findOne({ userId: user.id }).lean(),
   ]);
 
-  const effective = {
-    occupation:
-      real(profile?.demographics?.occupation) || user.occupation || undefined,
-    ageGroup: real(profile?.demographics?.ageGroup) || user.ageGroup || undefined,
-    incomeRange:
-      real(profile?.financial?.incomeRange) || user.incomeRange || undefined,
-  };
+  const effective = buildRecommendationProfile(profile, user);
 
   return scoreSchemes(schemes, effective, limit);
 };

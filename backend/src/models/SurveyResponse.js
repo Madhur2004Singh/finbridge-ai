@@ -102,7 +102,7 @@ surveySchema.pre("validate", function (next) {
 
 export const SurveyResponse = mongoose.model("SurveyResponse", surveySchema);
 
-/** The 12 answer keys that count toward completion status. */
+/** The 13 answer keys that count toward completion status. */
 export const SURVEY_FIELDS = [
   "ageGroup",
   "occupation",

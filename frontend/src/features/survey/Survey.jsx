@@ -195,10 +195,8 @@ export default function Survey() {
     for (const key of Object.keys(EMPTY)) {
       const value = form[key];
       if (Array.isArray(value)) {
-        if (value.length) payload[key] = value;
-      } else if (value !== "" && value !== undefined) {
-        payload[key] = typeof value === "string" ? value.trim() : value;
-      }
+        payload[key] = value;
+      } else payload[key] = value === "" || value === undefined ? null : value.trim();
     }
     return payload;
   };

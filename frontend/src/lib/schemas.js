@@ -47,7 +47,8 @@ export const profileSchema = z.object({
 const optionalEnum = (values, message) =>
   z
     .string()
-    .refine((v) => v === "" || values.includes(v), message)
+    .nullable()
+    .refine((v) => v === null || v === "" || values.includes(v), message)
     .optional();
 
 export const SURVEY_OPTIONS = {
@@ -75,8 +76,8 @@ export const SURVEY_OPTIONS = {
 export const surveySchema = z.object({
   ageGroup: optionalEnum(SURVEY_OPTIONS.ageGroup, "Invalid age group"),
   occupation: optionalEnum(SURVEY_OPTIONS.occupation, "Invalid occupation"),
-  state: z.string().max(60, "State is too long").optional(),
-  city: z.string().max(60, "City is too long").optional(),
+  state: z.string().max(60, "State is too long").nullable().optional(),
+  city: z.string().max(60, "City is too long").nullable().optional(),
   incomeRange: optionalEnum(SURVEY_OPTIONS.incomeRange, "Invalid income range"),
   savingsHabit: optionalEnum(SURVEY_OPTIONS.savingsHabit, "Invalid savings habit"),
   expenditurePattern: optionalEnum(

@@ -10,7 +10,6 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
       match: [/^\S+@\S+\.\S+$/, "Invalid email format"],
-      index: true,
     },
     passwordHash: { type: String, required: true, select: false },
     role: { type: String, enum: ["user", "admin"], default: "user" },
@@ -50,9 +49,7 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Explicit index: ensure only email unique (no legacy username index)
-// Mongoose will create this; orphan username_1 is dropped at startup in config/db.js
-userSchema.index({ email: 1 }, { unique: true });
+// The field-level unique constraint creates the email index; no username index is defined.
 
 // Remove sensitive fields in JSON
 userSchema.methods.toSafeObject = function () {

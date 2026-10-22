@@ -23,6 +23,9 @@ const r = {
       benefits: "Benefits",
       documents: "Documents required",
       application: "How to apply",
+      krishiSakhiHeading: "Are you a farmer? 🌾",
+      krishiSakhiDescription: "Explore Krishi Sakhi for useful farming information and resources.",
+      krishiSakhiVisit: "Visit Krishi Sakhi →",
     },
   },
   hi: {
@@ -46,6 +49,9 @@ const r = {
       benefits: "लाभ",
       documents: "आवश्यक दस्तावेज़",
       application: "आवेदन कैसे करें",
+      krishiSakhiHeading: "क्या आप किसान हैं? 🌾",
+      krishiSakhiDescription: "खेती से जुड़ी उपयोगी जानकारी और संसाधनों के लिए कृषि सखी देखें।",
+      krishiSakhiVisit: "कृषि सखी देखें →",
     },
   },
   kn: {
@@ -69,6 +75,9 @@ const r = {
       benefits: "ಲಾಭಗಳು",
       documents: "ಅಗತ್ಯ ದಾಖಲೆಗಳು",
       application: "ಹೇಗೆ ಅರ್ಜಿ ಸಲ್ಲಿಸುವುದು",
+      krishiSakhiHeading: "ನೀವು ರೈತರೇ? 🌾",
+      krishiSakhiDescription: "ಕೃಷಿಗೆ ಸಂಬಂಧಿಸಿದ ಉಪಯುಕ್ತ ಮಾಹಿತಿ ಮತ್ತು ಸಂಪನ್ಮೂಲಗಳಿಗಾಗಿ ಕೃಷಿ ಸಖಿಯನ್ನು ನೋಡಿ.",
+      krishiSakhiVisit: "ಕೃಷಿ ಸಖಿಯನ್ನು ನೋಡಿ →",
     },
   },
 };
